@@ -14,6 +14,7 @@ enum ShaderType { Vertex = 0, Fragment = 1, Geometry = 2 };
 class HShader
 {
 public:
+    bool HasCompiled;
     unsigned int Id;
     std::string VShaderCode;
     std::string FShaderCode;
@@ -56,7 +57,11 @@ void HShader::ModifyOrAddMacro(const std::string Key, T1 Value)
     {
         if (Macros[i].find(Key) != std::string::npos)
         {
-            Macros[i] = ss.str();
+            if(Macros[i] != ss.str())
+            {
+                Macros[i] = ss.str();
+                HasCompiled = false;
+            }
             return;
         }
     }

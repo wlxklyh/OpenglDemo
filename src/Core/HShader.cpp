@@ -8,7 +8,7 @@
 
 
 
-HShader::HShader(const char* VertexPath, const char* FragmentPath)
+HShader::HShader(const char* VertexPath, const char* FragmentPath): HasCompiled(false)
 {
     // 1. retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
@@ -63,6 +63,10 @@ std::string HShader::GetFullShaderCode(ShaderType Type)
 
 void HShader::Compile()
 {
+    if (HasCompiled)
+    {
+        return;
+    }
     unsigned int vertex, fragment;
     // vertex shader
     vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -90,6 +94,7 @@ void HShader::Compile()
     // necessery
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+    HasCompiled = true;
 }
 
 void HShader::Use()
