@@ -202,5 +202,4 @@ void HShader::CheckCompileErrors(GLuint Shader, std::string Type,
     {
         std::cout << "Shader source code: " << Sourcecode << std::endl;
     }
-    std::cout << "Shader source code: " << Sourcecode << std::endl;
 }
