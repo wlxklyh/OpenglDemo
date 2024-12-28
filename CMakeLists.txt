@@ -114,27 +114,7 @@ foreach(CHAPTER ${CHAPTERS})
             set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/${CHAPTER}")
         endif(WIN32)
 
-        # 拷贝shader到build目录
-        file(GLOB SHADERS
-                "src/Samples/${CHAPTER}/${DEMO}/*.vs"
-                "src/Samples/${CHAPTER}/${DEMO}/*.fs"
-                "src/Samples/${CHAPTER}/${DEMO}/*.gs"
-                "src/Samples/${CHAPTER}/${DEMO}/*.glsl"
-                )
-        foreach(SHADER ${SHADERS})
-            if(WIN32)
-                # configure_file(${SHADER} "test")
-                target_compile_definitions(${NAME} PRIVATE "SLN_SOURCE_CODE_DIR=\"${CMAKE_SOURCE_DIR}/src/Samples/${CHAPTER}/${DEMO}/\"")
-                add_custom_command(TARGET ${NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SHADER} $<TARGET_FILE_DIR:${NAME}>)
-
-            elseif(UNIX AND NOT APPLE)
-                file(COPY ${SHADER} DESTINATION ${CMAKE_SOURCE_DIR}/bin/${CHAPTER})
-            elseif(APPLE)
-                # create symbolic link for *.vs *.fs *.gs
-                get_filename_component(SHADERNAME ${SHADER} NAME)
-                makeLink(${SHADER} ${CMAKE_SOURCE_DIR}/bin/${CHAPTER}/${SHADERNAME} ${NAME})
-            endif(WIN32)
-        endforeach(SHADER)
+        target_compile_definitions(${NAME} PRIVATE "SLN_SOURCE_CODE_DIR=\"${CMAKE_SOURCE_DIR}/src/Samples/${CHAPTER}/${DEMO}/\"")
 
         # if compiling for visual studio, also use configure file for each project (specifically to set up working directory)
         if(MSVC)
