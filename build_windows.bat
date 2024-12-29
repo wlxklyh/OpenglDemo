@@ -15,5 +15,3 @@ cd %dir_name%
 cmake ..
 
 pause 
-
-cmake --build .

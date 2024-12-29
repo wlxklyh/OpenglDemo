@@ -81,7 +81,7 @@ endforeach()
 # then create a project file per tutorial
 foreach(CHAPTER ${CHAPTERS})
     foreach(DEMO ${${CHAPTER}})
-        file(GLOB SOURCE
+        file(GLOB_RECURSE SOURCE
                 "src/Samples/${CHAPTER}/${DEMO}/*.h"
                 "src/Samples/${CHAPTER}/${DEMO}/*.cpp"
                 "src/Samples/${CHAPTER}/${DEMO}/*.vs"
@@ -91,6 +91,11 @@ foreach(CHAPTER ${CHAPTERS})
                 )
         set(NAME "${CHAPTER}__${DEMO}")
         add_executable(${NAME} ${SOURCE})
+        
+        file(GLOB_RECURSE NON_CODE_FILE
+                        "build_windows.bat"
+                        )
+        target_sources(${NAME} PRIVATE "${NON_CODE_FILE}")
         
         # 链接库目录glfw3dll
         target_link_directories(${NAME} PRIVATE

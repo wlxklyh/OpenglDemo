@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <stdio.h>
 #define GL_SILENCE_DEPRECATION
+#include <stb_image.h>
+
 #include "HShader.h"
 
 #include <GLFW/glfw3.h>
@@ -19,19 +21,21 @@ static void glfw_error_callback(int error, const char* description)
 
 #include "CoreHeader.h"
 #include <learnopengl/shader.h>
+#include <learnopengl/filesystem.h>
 // 三角形的顶点数据 是在NDC范围  远是1 近是0.0
 // 远处的绿色三角形
 float g_green_vertices[] = {
-    1.0f, 1.0f, 0.9f, 0.0f, 1.0f, 0.0f, // 绿色
-    1.0f, -1.0f, 0.9f, 0.0f, 1.0f, 0.0f, // 绿色
-    -1.0f, 1.0f, 0.9f, 0.0f, 1.0f, 0.0f, // 绿色
+    //     ---- 位置 ----         ---- 颜色绿色 ----     ---- UV ----
+    1.0f, 1.0f, 0.9f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 0.9f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0.9f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 };
 // 近处的红色三角形
 float g_red_vertices[] = {
-    //     ---- 位置 ----         ---- 位置 ----
-    1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 红色
-    1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 红色
-    -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 红色
+    //     ---- 位置 ----         ---- 颜色红色 ----     ---- UV ----
+    1.0f, 1.0f, 0.9f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 0.9f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0.9f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 };
 uint32 g_indices[] = {
     0,
@@ -43,6 +47,27 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 uint32 GenerateVAO(int32 verticesSize, float* vertices, int32 indicesSize = 0,
                    uint32* indices = nullptr);
+
+uint32 GenerateTexture(const char* picPath, int texDiskFormat, int texFormat, int filter)
+{
+    uint32 texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    int width, height, nrChanneLs;
+    uint8* data = stbi_load(FileSystem::getPath(picPath).c_str(), &width, &height, &nrChanneLs, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    stbi_image_free(data);
+    return texture;
+}
+
 
 static int s_width = 1000;
 static int s_height = 1000;
@@ -99,7 +124,7 @@ int main()
         SLN_SOURCE_CODE_DIR + std::string("EarlyZ_FS.glsl");
     HShader EarlyZShader(EarlyZ_VSPath.c_str(),
                          EarlyZ_FSPath.c_str());
-
+    EarlyZShader.SetInt("Texture0", 0);
 
     // 绑定buffer
     GLuint counterBuffer;
@@ -109,6 +134,8 @@ int main()
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr,
                  GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+    uint32 texture = GenerateTexture("resources/textures/wood.png", 0, 0, 0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -142,6 +169,10 @@ int main()
             EarlyZShader.ModifyOrAddMacro("OPEN_EARLY_Z", s_OpenEarlyZ);
             EarlyZShader.Compile();
             EarlyZShader.Use();
+
+            //纹理
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
 
             // 绘制两个三角形
             if (s_DrawRedTri)
@@ -221,13 +252,14 @@ uint32 GenerateVAO(int32 verticesSize, float* vertices, int32 indicesSize,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize, indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                          static_cast<void*>(nullptr));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                          (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     return VAO;
 }
