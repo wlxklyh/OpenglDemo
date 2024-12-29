@@ -76,7 +76,9 @@ static int s_height = 1000;
 static bool s_OpenEarlyZ = true;
 static bool s_OpenDepthTest = true;
 static bool s_DrawGreenTri = true;
+static bool s_GreenTriDiscard = false;
 static bool s_DrawRedTri = true;
+static bool s_RedTriDiscard = false;
 static GLuint s_FragmentCount = 0;
 
 int main()
@@ -165,10 +167,7 @@ int main()
             glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &newValue);
             glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
-            // 是否开启Earlyz
-            EarlyZShader.ModifyOrAddMacro("OPEN_EARLY_Z", s_OpenEarlyZ);
-            EarlyZShader.Compile();
-            EarlyZShader.Use();
+
 
             //纹理
             glActiveTexture(GL_TEXTURE0);
@@ -177,11 +176,23 @@ int main()
             // 绘制两个三角形
             if (s_DrawRedTri)
             {
+                // 是否开启Earlyz
+                EarlyZShader.ModifyOrAddMacro("OPEN_EARLY_Z", s_OpenEarlyZ);
+                EarlyZShader.ModifyOrAddMacro("OPEN_DISCARD", s_RedTriDiscard);
+                EarlyZShader.Compile();
+
+                EarlyZShader.Use();
                 glBindVertexArray(NearRedTriVAO);
                 glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
             }
             if (s_DrawGreenTri)
             {
+                // 是否开启Earlyz
+                EarlyZShader.ModifyOrAddMacro("OPEN_EARLY_Z", s_OpenEarlyZ);
+                EarlyZShader.ModifyOrAddMacro("OPEN_DISCARD", s_GreenTriDiscard);
+                EarlyZShader.Compile();
+
+                EarlyZShader.Use();
                 glBindVertexArray(FarGreenTriVAO);
                 glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
             }
@@ -215,7 +226,13 @@ int main()
                 ImGui::Checkbox("OpenEarlyZ", &s_OpenEarlyZ);
                 ImGui::Checkbox("OpenDepthTest", &s_OpenDepthTest);
                 ImGui::Checkbox("DrawGreenTri", &s_DrawGreenTri);
+                ImGui::SameLine();
+                ImGui::Checkbox("GreenOpenDiscard", &s_GreenTriDiscard);
+
                 ImGui::Checkbox("DrawRedTri", &s_DrawRedTri);
+                ImGui::SameLine();
+                ImGui::Checkbox("RedOpenDiscard", &s_RedTriDiscard);
+
                 ImGui::Text("Fragment Count = %d", static_cast<int>(s_FragmentCount));
 
                 ImGui::NewLine();

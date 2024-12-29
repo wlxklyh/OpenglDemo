@@ -18,7 +18,9 @@ void main()
     // float lod = length(vec2(length(texDx), length(texDy)));
     //vec4 color0 = texture(Texture0,outTexCoord);
     // vec4 color0 = textureLod(Texture0, outTexCoord, lod);
-
+#if OPEN_DISCARD
+    discard;
+#endif
     atomicCounterIncrement(counter);
     FragColor = vec4(outColor, 1.0);
 }
